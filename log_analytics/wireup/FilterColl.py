@@ -1,10 +1,11 @@
 #!/usr/bin/python
-import Regexper
+from Regexper import Regexper
 
 # Filters
 class CollFilter:
     def filter(self, log_line):
         print "abstract method"
+
 
 class RingLocalFilter(CollFilter):
 
@@ -24,6 +25,7 @@ class RingLocalFilter(CollFilter):
         parsed_dict = regexper.parse(log_line)
 
         return parsed_dict
+
 
 class RingRemoteFilter(CollFilter):
 
@@ -45,26 +47,28 @@ class RingRemoteFilter(CollFilter):
 
         return parsed_dict
 
+
 # CollModule
 class CollModule:
-
+    @staticmethod
     def register(mgr):
-        local_Module = CollLocalModule(mgr.state)
+        local_Module = CollLocalModule(mgr.state.coll)
         mgr.add(local_Module.fields, local_Module)
-        remote_module = CollRemoteModule(mgr.state)
+        remote_module = CollRemoteModule(mgr.state.coll)
         mgr.add(remote_module.fields, remote_module)
 
-    def update(self, line, ts, nodeid):
+    def update(self, pline, ts, nodeid):
         service = self.service()
         filter = self.filter()
         converter = self.converter()
 
-        pline = filter.filter(line)
-        dto = converter.convert(pline)
+        line = pline["logline"]
+        parsed_dict = filter.filter(line)
+        dto = converter.convert(parsed_dict)
         dto.set_ts(ts)
         dto.set_nodeid(nodeid)
 
-        service.update(dto)
+        service.update_coll(dto)
 
     def service(self):
         print("abstract method")
@@ -72,6 +76,7 @@ class CollModule:
         print("abstract method")
     def converter(self):
         print("abstract method")
+
 
 class CollLocalModule(CollModule):
 
@@ -96,7 +101,7 @@ class CollRemoteModule(CollModule):
         self.coll = coll
 
     def service(self):
-        return CollRemoteService()
+        return CollRemoteService(self.coll)
 
     def filter(self):
         return RingRemoteFilter()
@@ -105,6 +110,7 @@ class CollRemoteModule(CollModule):
         return CollRemoteConverter()
 
 # Collective service
+
 
 class CollLocalService:
 
@@ -120,6 +126,7 @@ class CollLocalService:
             coll_operation.ts,
             coll_operation.nodeid
         )
+
 
 class CollRemoteService:
 
@@ -139,25 +146,28 @@ class CollRemoteService:
 
 # Converters
 
+
 class CollLocalConverter:
     def convert(self, fdescr):
         return LocalColl(
-            fdescr["cseq"],
-            fdescr["contrib_id"],
-            fdescr["size"]
+            int(fdescr["cseq"]),
+            int(fdescr["contrib_id"]),
+            int(fdescr["size"])
         )
+
 
 class CollRemoteConverter:
     def convert(self, fdescr):
 
         return RemoteColl(
-            fdescr["cseq"],
-            fdescr["contrib_id"],
-            fdescr["size"],
-            fdescr["src"]
+            int(fdescr["cseq"]),
+            int(fdescr["contrib_id"]),
+            int(fdescr["size"]),
+            int(fdescr["src"])
         )
 
 # Data transfer objects (DTO)
+
 
 class LocalColl:
 
@@ -173,6 +183,7 @@ class LocalColl:
 
     def set_nodeid(self, nodeid):
         self.nodeid = nodeid
+
 
 class RemoteColl:
 

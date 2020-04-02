@@ -23,6 +23,7 @@ import FilterSPMIx as fbase
 import FilterUCX as fucx
 import FilterColl as fcoll
 import collectives as coll
+from Assembly import Assembly
 
 
 class GlobalState:
@@ -74,7 +75,7 @@ def parse_args():
 #        sys.exit(1)
 
 
-def parse_slurmd_logs(flt, path):
+def parse_slurmd_logs(mgr, path):
     if( not os.path.isdir(path)):
         print "parse_slurmd_logs(ERROR): '--parse' directory doesn't exists: ", s.parse_path
         sys.exit(1)
@@ -88,7 +89,7 @@ def parse_slurmd_logs(flt, path):
             text = f.readlines()
         f.close()
         for l in text:
-            flt.apply(l)
+            mgr.apply(l)
 
 def discover_jobid(path):
     for root, dnames, fnames in os.walk(path, True):
@@ -106,12 +107,18 @@ def discover_jobid(path):
         break
     return None
 
+def build_parsing_mgr():
+
+    assembly = Assembly(state)
+    return assembly.parse_mgr()
+
 def parse_dataset():
     path = state.set.parse_path
     jobid = state.set.jobid
 
     if( None == jobid ):
         jobid = discover_jobid(path + "/app_logs")
+        state.set.jobid = jobid
     if( None == jobid ):
         # TODO: extract the jobid from the files
         print "ERROR: Slurm Job ID is required: ", mpisync_path
@@ -138,25 +145,25 @@ def parse_dataset():
     # Regex to filter related lines
     # Example:
     # [2020-01-15T04:07:51.707] [6.8] debug:  [(null):0] [1579054071.707138] [mpi_pmix.c:153:p_mpi_hook_slurmstepd_prefork] mpi/pmix:  start
-    regex_chk = "^\[\S+\]"
-    regex = "^\[\S+\] \[(\S+)\]\s*debug:\s*\[(\S+):(\d+)\]\s*\[(\S+)]\s*\[(\S+):(\d+):(\S+)\]\s*mpi/pmix:\s(.*)"
-    fdescr = {}
-    fdescr["jobid"] = 1
-    fdescr["hostname"] = 2
-    fdescr["nodeid"] = 3
-    fdescr["timestamp"] = 4
-    fdescr["file"] = 5
-    fdescr["line"] = 6
-    fdescr["function"] = 7
-    fdescr["logline"] = 8
+    # regex_chk = "^\[\S+\]"
+    # regex = "^\[\S+\] \[(\S+)\]\s*debug:\s*\[(\S+):(\d+)\]\s*\[(\S+)]\s*\[(\S+):(\d+):(\S+)\]\s*mpi/pmix:\s(.*)"
+    # fdescr = {}
+    # fdescr["jobid"] = 1
+    # fdescr["hostname"] = 2
+    # fdescr["nodeid"] = 3
+    # fdescr["timestamp"] = 4
+    # fdescr["file"] = 5
+    # fdescr["line"] = 6
+    # fdescr["function"] = 7
+    # fdescr["logline"] = 8
 
-    flt = lf.LFilter(jobid, regex_chk, regex, fdescr, "function")
-    uf = fucx.FilterUCX(flt, state.cluster, state.ucx_mtx, state.sync)
-    bf = fbase.FilterSPMIx(flt, state.cluster, state.wireup_mtx, state.sync)
-    cf = fcoll.FilterColl(flt, state.cluster, state.coll, state.sync)
+    # flt = lf.LFilter(jobid, regex_chk, regex, fdescr, "function")
+    # uf = fucx.FilterUCX(flt, state.cluster, state.ucx_mtx, state.sync)
+    # bf = fbase.FilterSPMIx(flt, state.cluster, state.wireup_mtx, state.sync)
+    # cf = fcoll.FilterColl(flt, state.cluster, state.coll, state.sync)
 
-
-    parse_slurmd_logs(flt, path + "/slurm_logs/")
+    mgr = build_parsing_mgr()
+    parse_slurmd_logs(mgr, path + "/slurm_logs/")
 #    state.wireup_mtx.match()
     state.ucx_mtx.match()
 

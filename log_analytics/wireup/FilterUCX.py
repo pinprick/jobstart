@@ -2,23 +2,30 @@
 
 import re
 
-class FilterUCX:
-    def __init__(self, flt, cluster, chan, sync):
-        self.sync = sync
-        self.ch = chan
-        self.cluster = cluster
-        fields = { "function" : "_ucx_send" }
-        flt.add(fields, self, 1)
-        fields = { "function" : "send_handle" }
-        flt.add(fields, self, 1)
-        fields = { "function" : "_ucx_progress" }
-        flt.add(fields, self, 1)
+# UCX Module
+class UCXModule:
+    @staticmethod
+    def register(mgr):
 
-    def lfilter(self, pline, fid):
-        nodeid = int(pline["nodeid"])
-        n = self.cluster.node(nodeid)
-        hostname = pline["hostname"]
-        ts = self.sync.global_ts(nodeid, hostname, float(pline["timestamp"]))
+        filter = FilterUCX(mgr.state.ucx_mtx)
+        module = UCXModule(filter)
+
+        mgr.add({"function": "_ucx_send"}, module)
+        mgr.add({"function": "send_handle"}, module)
+        mgr.add({"function": "_ucx_progress"}, module)
+
+    def __init__(self, filter):
+        self.filter = filter
+
+    def update(self, pline, ts, nodeid):
+        self.filter.lfilter(pline, nodeid, ts)
+
+# UCX FilterUCX
+class FilterUCX:
+    def __init__(self, chan):
+        self.ch = chan
+
+    def lfilter(self, pline, ts, nodeid):
         regex_tmp = ".*UCX:\s*(\S+)\s*\[(\S+)\]\s*nodeid=(\d+),\s*mid=(\d+),\s*size=(\d+)"
         t = re.compile(regex_tmp)
         m = t.match(pline["logline"])

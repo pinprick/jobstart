@@ -2,40 +2,80 @@
 
 import re
 
+# SPMIx Module
+class SPMIxModule:
+    @staticmethod
+    def register(mgr):
+
+        filter = FilterSPMIx(mgr.state.cluster, mgr.state.wireup_mtx)
+
+        hostname_srv = SPMIxHostnameService(filter)
+        mgr.add(hostname_srv.fields, hostname_srv)
+
+        wireup_start_srv = SPMIxWireupStartService(filter)
+        mgr.add(wireup_start_srv.fields, wireup_start_srv)
+
+        wireup_thread_srv = SPMIxWireupThreadService(filter)
+        mgr.add(wireup_thread_srv.fields, wireup_thread_srv)
+
+        wireup_connected_srv = SPMIxWireupConnectedService(filter)
+        mgr.add(wireup_connected_srv.fields, wireup_connected_srv)
+
+    def update(self, line, ts, nodeid):
+        print "abstract method"
+
+# SPMIx services
+class SPMIxService(SPMIxModule):
+    def __init__(self, filter):
+        self.filter = filter
+
+    def update(self, pline, ts, nodeid):
+        print "abstract method"
+
+# Set the hostname for the nodeid
+class SPMIxHostnameService(SPMIxService):
+    fields = {"function": "_agent_thread"}
+
+    def update(self, pline, ts, nodeid):
+        self.filter.lfilter(pline, FilterSPMIx.HOSTNAME, ts, nodeid)
+
+# Record Early Wireup start
+class SPMIxWireupStartService(SPMIxService):
+    fields = {"function": "pmixp_server_wireup_early"}
+
+    def update(self, pline, ts, nodeid):
+        self.filter.lfilter(pline, FilterSPMIx.EARLY_WIREUP_START, ts, nodeid)
+
+# Record Early Wireup thread
+class SPMIxWireupThreadService(SPMIxService):
+    fields = {"function": "_wireup_thread"}
+
+    def update(self, pline, ts, nodeid):
+        self.filter.lfilter(pline, FilterSPMIx.EARLY_WIREUP_THREAD, ts, nodeid)
+
+# Record Early Wireup thread
+class SPMIxWireupConnectedService(SPMIxService):
+    fields = {"function": "pmixp_dconn_connect"}
+
+    def update(self, pline, ts, nodeid):
+        self.filter.lfilter(pline, FilterSPMIx.WIREUP_CONNECTED, ts, nodeid)
+
+# FilterSPMIx
 class FilterSPMIx:
-    HOSTNAME=1
+    HOSTNAME = 1
     EARLY_WIREUP_START = 2
     EARLY_WIREUP_THREAD = 3
     WIREUP_CONNECTED = 4
 
-    def __init__(self, flt, cluster, chan, sync):
+    def __init__(self, cluster, chan):
         self.cl = cluster
         self.ch = chan
-        self.sync = sync
         self.send_msg_id = 0
         self.recv_msg_id = 0
 
-        # Set the hostname for the nodeid
-        fields = { "function" : "_agent_thread" }
-        flt.add(fields, self, self.HOSTNAME);
+    def lfilter(self, pline, fid, ts, nodeid):
 
-        # Record Early Wireup start
-        fields = { "function" : "pmixp_server_wireup_early" }
-        flt.add(fields, self, self.EARLY_WIREUP_START);
-
-        # Record Early Wireup thread
-        fields = { "function" : "_wireup_thread" }
-        flt.add(fields, self, self.EARLY_WIREUP_THREAD);
-
-        # Record Early Wireup thread
-        fields = { "function" : "pmixp_dconn_connect" }
-        flt.add(fields, self, self.WIREUP_CONNECTED);
-
-
-    def lfilter(self, pline, fid):
-        nodeid = int(pline["nodeid"])
         hostname = pline["hostname"]
-        ts = self.sync.global_ts(nodeid, hostname, float(pline["timestamp"]))
 
         if ( fid == self.HOSTNAME ):
             if( pline["logline"].find("Start agent thread") != -1 ):

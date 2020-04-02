@@ -1,20 +1,27 @@
-import LogParser
-import LineValidator
-import Regexper
-import ParsingManager
-import FilterColl as cflt
+from LogParser import LogParser
+from LineValidator import LineValidator
+from ParsingManager import ParsingManager
+from Regexper import Regexper
+import FilterColl as coll
+import FilterSPMIx as spmix
+import FilterUCX as ucx
+
 
 class Assembly:
+
+    H_FIELD = "function"
 
     def __init__(self, state):
         self.state = state
 
-    def build_parser(self, job_id):
-
+    def validator(self):
         regex_chk = "^\[\S+\]"
-        validator = LineValidator(regex_chk)
+        return LineValidator(regex_chk)
+
+    def build_parser(self):
 
         regex = "^\[\S+\] \[(\S+)\]\s*debug:\s*\[(\S+):(\d+)\]\s*\[(\S+)]\s*\[(\S+):(\d+):(\S+)\]\s*mpi/pmix:\s(.*)"
+
         fdescr = {}
         fdescr["jobid"] = 1
         fdescr["hostname"] = 2
@@ -27,10 +34,16 @@ class Assembly:
 
         base_parser = Regexper(regex, fdescr)
 
-        # job_id = self.state.set.jobid
-        parser = LogParser(job_id, "function", validator, base_parser)
+        job_id = self.state.set.jobid
+        parser = LogParser(job_id, "function", self.validator(), base_parser)
         return parser
 
-    def build_parse_mgr(self):
-        mgr = ParsingManager(self.state, "function")
-        mgr.register_modules([cflt.CollFilter])
+    def modules(self):
+        return [coll.CollModule, spmix.SPMIxModule, ucx.UCXModule]
+
+    def parse_mgr(self):
+        parser = self.build_parser()
+        mgr = ParsingManager(self.state, self.H_FIELD, parser)
+        mgr.register_modules(self.modules())
+
+        return mgr
