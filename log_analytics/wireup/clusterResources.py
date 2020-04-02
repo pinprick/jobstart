@@ -8,7 +8,7 @@ import os
 # ========================== Node state ============================ #
 #                                                                    #
 
-class clusterNode:
+class ClusterNode:
     START = 1
     WIREUP_START = 1
     WIREUP_INIT = 1
@@ -24,13 +24,13 @@ class clusterNode:
     def hostname(self):
         return self.host_name
 
-class clusterSystem:
+class ClusterSystem:
     def __init__(self):
         self.nodes = { }
         self.start_times = None
 
     def new_node(self, nodeid):
-        self.nodes[nodeid] = clusterNode(nodeid)
+        self.nodes[nodeid] = ClusterNode(nodeid)
         return self.nodes[nodeid]
 
     def node(self, nodeid):
@@ -41,22 +41,22 @@ class clusterSystem:
     def start(self, nodeid, hostname, ts):
         n = self.node(nodeid)
         n.hostname = hostname
-        n.progress[clusterNode.START] = ts
+        n.progress[ClusterNode.START] = ts
 
     def wireup_start(self, nodeid, ts):
         n = self.node(nodeid)
-        n.progress[clusterNode.WIREUP_START] = ts
+        n.progress[ClusterNode.WIREUP_START] = ts
 
     def wireup_init(self, nodeid, ts):
         n = self.node(nodeid)
-        n.progress[clusterNode.WIREUP_INIT] = ts
+        n.progress[ClusterNode.WIREUP_INIT] = ts
 
     def sort(self):
         if( None != self.start_times):
             return
         boot = { }
         for i in self.nodes.keys():
-            boot[i] = self.nodes[i].progress[clusterNode.START]
+            boot[i] = self.nodes[i].progress[ClusterNode.START]
         self.start_times = sorted(boot.items(), key = lambda kv : (kv[1]))
 
 

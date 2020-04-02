@@ -2,7 +2,7 @@
 
 import re
 
-class filterSPMIx:
+class FilterSPMIx:
     HOSTNAME=1
     EARLY_WIREUP_START = 2
     EARLY_WIREUP_THREAD = 3

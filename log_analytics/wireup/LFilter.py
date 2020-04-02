@@ -8,9 +8,9 @@ import sys
 import os
 
 # Filtering 
-class lFilter:
+class LFilter:
     default_field = "LF_DEFAULT"
-    class filter_int:
+    class FilterInt:
         def __init__(self, fields, obj, fid):
             self.fields = fields
             self.obj = obj
@@ -42,7 +42,7 @@ class lFilter:
             print "Cannot import filter: hash field is not provided"
             os.abort()
         field = fields[self.hfield]
-        f = self.filter_int(fields, obj, fid);
+        f = self.FilterInt(fields, obj, fid);
         if ( not (field in self.filters.keys()) ):
             self.filters[field] = []
         #print "lFilter: Append to ", field, " fields = ", fields

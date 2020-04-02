@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
-class contribRingStats:
+class ContribRingStats:
     def __init__(self):
         self.imbalance = 0
 
-class contribRing:
+class ContribRing:
     def __init__(self, seq, contrib_id):
         self.cseq = seq
         self.cid = contrib_id
@@ -64,7 +64,7 @@ class contribRing:
             print "\tFrom ", start, " to ", rev_graph[start], " time: ", lat, "us"
             start = rev_graph[start]
 
-class collRing:
+class CollRing:
     def __init__(self, cluster, seqid):
         self.cluster = cluster
         self.seq = seqid
@@ -73,7 +73,7 @@ class collRing:
 
     def update(self, contrib_id, size, ts, dst, src = -1):
         if( not (contrib_id in self.contribs.keys())):
-            self.contribs[contrib_id] = contribRing(self.seq, contrib_id)
+            self.contribs[contrib_id] = ContribRing(self.seq, contrib_id)
         self.contribs[contrib_id].append(size, ts, dst, src)
 
     def summary(self):
@@ -107,7 +107,7 @@ class collRing:
         for cid in bycid:
             cid[1].dump()
 
-class collectives:
+class Collectives:
     def __init__(self, cluster):
         self.cluster = cluster
         self.coll = { }
@@ -116,7 +116,7 @@ class collectives:
     def update(self, ctype, cseq, contrib_id, size, ts, dst, src = -1):
         if( ctype == "ring"):
             if( not (cseq in self.coll[ctype].keys())):
-                self.coll[ctype][cseq] = collRing(self.cluster, cseq)
+                self.coll[ctype][cseq] = CollRing(self.cluster, cseq)
                 print "New 'ring' collective #", cseq
             self.coll[ctype][cseq].update(contrib_id, size, ts, dst, src)
 

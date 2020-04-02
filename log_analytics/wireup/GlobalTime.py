@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-class globalTime:
+class GlobalTime:
     def __init__(self):
         self.initialized = False
         self.by_host = { }

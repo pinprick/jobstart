@@ -2,7 +2,7 @@
 
 import re
 
-class filterColl:
+class FilterColl:
     RING_LOCAL = 1
     RING_REMOTE = 2
     RING_FORWARD = 3

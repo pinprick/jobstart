@@ -2,7 +2,7 @@
 
 import statistics as stat
 
-class message:
+class Message:
     def __init__(self):
         self._size = 0
         self._mid = -1
@@ -36,7 +36,7 @@ class message:
             return None
         return self._ts[state]
 
-class channel:
+class Channel:
     SEND = 1
     RECV = 2
 
@@ -56,7 +56,7 @@ class channel:
 
     def update(self, side, mid, mtype, size, ts):
         if( not (mid in self.ch[side].keys())):
-            msg = message()
+            msg = Message()
             msg.set_size(size)
             msg.set_mid(mid)
             self.ch[side][mid] = msg
@@ -117,12 +117,12 @@ class channel:
         return lat
 
 
-class channelMatrix:
+class ChannelMatrix:
     def __init__(self, send_side_name, recv_side_name):
         self.matrix = { }
         self.sides = {}
-        self.sides[send_side_name] = channel.SEND
-        self.sides[recv_side_name] = channel.RECV
+        self.sides[send_side_name] = Channel.SEND
+        self.sides[recv_side_name] = Channel.RECV
 
     def get_ts(self, src, dst, side_str, mtype, mid):
         assert (side_str in self.sides.keys()), "[channel]: Unknown side name \"" + side_str + "\""
@@ -140,7 +140,7 @@ class channelMatrix:
         if( not (src in self.matrix.keys())):
             self.matrix[src] = { }
         if( not (dst in self.matrix[src].keys())):
-            self.matrix[src][dst] = channel()
+            self.matrix[src][dst] = Channel()
 #        print "Update (", src, ",", dst, "): size = ", size
         self.matrix[src][dst].update(side, mid, mtype, size, ts)
 

@@ -2,7 +2,7 @@
 
 import re
 
-class filterUCX:
+class FilterUCX:
     def __init__(self, flt, cluster, chan, sync):
         self.sync = sync
         self.ch = chan

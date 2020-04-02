@@ -15,17 +15,17 @@ from copy import deepcopy
 import seaborn as sns
 
 # Local modules
-import lFilter as lf
+import LFilter as lf
 import clusterResources as cr
-import channelMatrix as cm
-import globalTime as gt
-import filterSPMIx as fbase
-import filterUCX as fucx
-import filterColl as fcoll
+import ChannelMatrix as cm
+import GlobalTime as gt
+import FilterSPMIx as fbase
+import FilterUCX as fucx
+import FilterColl as fcoll
 import collectives as coll
 
 
-class globalState:
+class GlobalState:
     def __init__(self):
         self.set = None
         self.cluster = None
@@ -34,7 +34,7 @@ class globalState:
         self.ucx_mtx = None
         self.coll = None
 
-state = globalState()
+state = GlobalState()
 
 def parse_args():
     global state
@@ -124,14 +124,14 @@ def parse_dataset():
     if( not os.path.exists(mpisync_path)):
         print "ERROR: No Time synchronization file (aka mpisync): ", mpisync_path
         sys.exit(1)
-    state.sync = gt.globalTime()
+    state.sync = gt.GlobalTime()
     state.sync.load(mpisync_path)
 
     # 2. Initialize data objects
-    state.wireup_mtx = cm.channelMatrix("send", "recv")
-    state.ucx_mtx = cm.channelMatrix("send", "recv")
-    state.cluster = cr.clusterSystem()
-    state.coll = coll.collectives(state.cluster)
+    state.wireup_mtx = cm.ChannelMatrix("send", "recv")
+    state.ucx_mtx = cm.ChannelMatrix("send", "recv")
+    state.cluster = cr.ClusterSystem()
+    state.coll = coll.Collectives(state.cluster)
 
     # 3. Initialize The Line filter framework and custom filters
     print "Initialize The Line filter framework and custom filters"
@@ -150,10 +150,10 @@ def parse_dataset():
     fdescr["function"] = 7
     fdescr["logline"] = 8
 
-    flt = lf.lFilter(jobid, regex_chk, regex, fdescr, "function")
-    uf = fucx.filterUCX(flt, state.cluster, state.ucx_mtx, state.sync)
-    bf = fbase.filterSPMIx(flt, state.cluster, state.wireup_mtx, state.sync)
-    cf = fcoll.filterColl(flt, state.cluster, state.coll, state.sync)
+    flt = lf.LFilter(jobid, regex_chk, regex, fdescr, "function")
+    uf = fucx.FilterUCX(flt, state.cluster, state.ucx_mtx, state.sync)
+    bf = fbase.FilterSPMIx(flt, state.cluster, state.wireup_mtx, state.sync)
+    cf = fcoll.FilterColl(flt, state.cluster, state.coll, state.sync)
 
 
     parse_slurmd_logs(flt, path + "/slurm_logs/")
